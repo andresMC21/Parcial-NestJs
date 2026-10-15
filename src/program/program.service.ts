@@ -76,7 +76,7 @@ export class ProgramService {
     //   Si algún id no existe: 404 y rollback.
     async assignStudents(programId: string, dto: AssignStudentsDto) {
 
-        for (const id of dto.ids) {
+        for (const id of dto.studentIds) {
 
             const student = await this.studentRepository.preload({
                 id: id
@@ -136,4 +136,15 @@ export class ProgramService {
 
     // TODO Reto 3: bulkCreate(bulkCreateProgramDto, user) -> crea todos los programas o ninguno
     //   (transacción). Cualquier nombre/código repetido -> 409 y rollback.
+    async bulkCreate(programs: CreateProgramDto[]) {
+
+        try {
+
+            
+
+        } catch (error) {
+
+        }
+
+    }
 }

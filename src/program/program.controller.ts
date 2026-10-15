@@ -48,5 +48,13 @@ export class ProgramController {
   }
 
   // TODO Reto 3: POST   /api/program/bulk          -> crear programas en lote (todo o nada)
+  @Post('bulk')
+  @Auth(ValidRoles.admin)
+  async bulkPrograms(@Body() programs: CreateProgramDto[]) {
+
+    return await this.programService.bulkCreate(programs);
+
+  }
+
   // TODO Reto 4: proteger los POST y el PATCH para que solo un admin pueda usarlos
 }
