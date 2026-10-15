@@ -74,9 +74,21 @@ export class ProgramService {
     //   Mismo patrón del update de estudiantes corregido en clase (combinar las notas):
     //   traer los actuales -> combinar con los nuevos -> guardar la lista completa.
     //   Si algún id no existe: 404 y rollback.
-    async assignStudents(id: string, dto: AssignStudentsDto) {
+    async assignStudents(programId: string, dto: AssignStudentsDto) {
 
         for (const id of dto.ids) {
+
+            const queryRunner = this.datasource.createQueryRunner();
+            await queryRunner.connect();
+            await queryRunner.startTransaction();
+
+            const currentStudents = await queryRunner.manager.find(Student, { where: { program: { id: programId } } });
+
+            const exist = currentStudents.find(
+
+                student => student.id == id
+            
+            );
 
             const student = await this.studentRepository.preload({
                 id: id
@@ -84,32 +96,31 @@ export class ProgramService {
 
             if (!student) throw new NotFoundException(`Student with id ${id} not found`);
 
-            const queryRunner = this.datasource.createQueryRunner();
-            await queryRunner.connect();
-            await queryRunner.startTransaction();
+
 
             try {
 
-                const currentStudents = await queryRunner.manager.find(Program, {
-                    where: {
-                        students: { id }
+                // 1. Traer kas notas que el estudiante tiene actualmente
+
+
+                // 2. Combinar: actualizar las notas actuales y agregar las nuevas que lleguen
+
+                for (const newGrade of grades) {
+
+
+
+
+                    if (exist) {
+
+                        exist.grade = newGrade.grade;
+
+                    } else {
+
+                        currentGrades.push(this.gradesRepository.create({
+                            subject: newGrade.subject,
+                            grade: newGrade.grade
+                        }))
                     }
-                })
-
-                const exist = currentStudents.find(
-                    student => student.id == id
-                );
-
-                if (exist) {
-
-                    exist.id = id;
-
-                } else {
-
-                    currentStudents.push(this.programRepository.create({
-                        subject: newGrade.subject,
-                        grade: newGrade.grade
-                    }))
                 }
 
                 // 3. Guardar la lista de notas completa: no queda ninguna otra huerfana
