@@ -25,7 +25,7 @@ export class ProgramService {
 
         try {
 
-            const newProgram = this.programRepository.create({ ...dto });
+            const newProgram = this.programRepository.create({ ...dto, createdBy: user });
             return await this.programRepository.save(newProgram);
 
         } catch (error) {
@@ -78,72 +78,60 @@ export class ProgramService {
 
         for (const id of dto.ids) {
 
-            const queryRunner = this.datasource.createQueryRunner();
-            await queryRunner.connect();
-            await queryRunner.startTransaction();
-
-            const currentStudents = await queryRunner.manager.find(Student, { where: { program: { id: programId } } });
-
-            const exist = currentStudents.find(
-
-                student => student.id == id
-            
-            );
-
             const student = await this.studentRepository.preload({
                 id: id
             })
 
             if (!student) throw new NotFoundException(`Student with id ${id} not found`);
 
-
+            const queryRunner = this.datasource.createQueryRunner();
+            await queryRunner.connect();
+            await queryRunner.startTransaction();
 
             try {
 
-                // 1. Traer kas notas que el estudiante tiene actualmente
+                const currentStudents = await queryRunner.manager.find(Student, { where: { program: { id: programId } } });
 
+                const exist = currentStudents.find(
 
-                // 2. Combinar: actualizar las notas actuales y agregar las nuevas que lleguen
+                    student => student.id == id
 
-                for (const newGrade of grades) {
+                );
 
+                if (exist) {
 
+                    exist.id = id;
 
+                } else {
 
-                    if (exist) {
+                    currentStudents.push(this.studentRepository.create({
 
-                        exist.grade = newGrade.grade;
+                        name: student.name,
+                        age: student.age,
+                        email: student.email,
+                        isActive: student.isActive,
+                        gender: student.gender,
+                        favoriteSubjects: student.favoriteSubjects,
+                        nickname: student.nickname
 
-                    } else {
-
-                        currentGrades.push(this.gradesRepository.create({
-                            subject: newGrade.subject,
-                            grade: newGrade.grade
-                        }))
-                    }
+                    }))
                 }
 
-                // 3. Guardar la lista de notas completa: no queda ninguna otra huerfana
-                student.grades = currentGrades;
-
+                student.program = await this.findById(programId);
 
                 await queryRunner.manager.save(student);
                 await queryRunner.commitTransaction();
                 await queryRunner.release();
 
-                return this.findOne(student.id)
-
+                return this.findById(programId);
 
             } catch (error) {
 
                 await queryRunner.rollbackTransaction();
                 await queryRunner.release();
 
-                this.handleException(error);
             }
-
         }
-
     }
 
     // TODO Reto 3: bulkCreate(bulkCreateProgramDto, user) -> crea todos los programas o ninguno

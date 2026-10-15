@@ -40,7 +40,7 @@ export class ProgramController {
 
   // TODO Reto 2: PATCH  /api/program/:id/students  -> agregar estudiantes (acumulativo)
   @Patch(':id/students')
-  @Auth(ValidRoles.admin, ValidRoles.teacher)
+  @Auth(ValidRoles.admin)
   async assignStudents(@Param() id: string, @Body() dto: AssignStudentsDto) {
 
     return await this.programService.assignStudents(id, dto);

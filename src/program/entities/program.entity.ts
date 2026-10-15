@@ -38,6 +38,7 @@ export class Program {
     @OneToMany(() => Student, (student) => student.program)
     students?: Student[]
 
-
+    @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
+    createdBy?: User;
 
 }
