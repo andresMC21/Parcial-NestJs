@@ -16,7 +16,7 @@ import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, OneToMany, Prima
 export class Program {
 
     @PrimaryGeneratedColumn('uuid')
-    id: string;
+    id: number;
 
     @Column({
         type: 'text',

@@ -7,6 +7,7 @@ import { User } from 'src/user/entities/user.entity';
 import { PaginationDto } from 'src/student/dto/pagination.dto';
 import { AssignStudentsDto } from './dto/assign-students.dto';
 import { Student } from 'src/student/entities/student.entity';
+import { BulkCreateProgramDto } from './dto/bulk-create-program.dto';
 
 @Injectable()
 export class ProgramService {
@@ -56,7 +57,7 @@ export class ProgramService {
 
 
     // TODO Reto 2: findOne(id) -> programa con sus estudiantes, 404 si no existe
-    async findById(id: string) {
+    async findById(id: number) {
 
         const found = await this.programRepository.findOneBy({ id });
 
@@ -74,7 +75,7 @@ export class ProgramService {
     //   Mismo patrón del update de estudiantes corregido en clase (combinar las notas):
     //   traer los actuales -> combinar con los nuevos -> guardar la lista completa.
     //   Si algún id no existe: 404 y rollback.
-    async assignStudents(programId: string, dto: AssignStudentsDto) {
+    async assignStudents(programId: number, dto: AssignStudentsDto) {
 
         for (const id of dto.studentIds) {
 
@@ -90,7 +91,7 @@ export class ProgramService {
 
             try {
 
-                const currentStudents = await queryRunner.manager.find(Student, { where: { program: { id: programId } } });
+                const currentStudents = await queryRunner.manager.find(Student, { where: { programId: programId } });
 
                 const exist = currentStudents.find(
 
@@ -117,7 +118,7 @@ export class ProgramService {
                     }))
                 }
 
-                student.program = await this.findById(programId);
+                student.programId = programId;
 
                 await queryRunner.manager.save(student);
                 await queryRunner.commitTransaction();
@@ -136,15 +137,19 @@ export class ProgramService {
 
     // TODO Reto 3: bulkCreate(bulkCreateProgramDto, user) -> crea todos los programas o ninguno
     //   (transacción). Cualquier nombre/código repetido -> 409 y rollback.
-    async bulkCreate(programs: CreateProgramDto[]) {
+    /**async bulkCreate(programs: BulkCreateProgramDto) {
 
         try {
 
-            
+            for (const program in programs.programs) {
+
+                const toCreate = this.programRepository.create(program)
+            }
+
 
         } catch (error) {
 
         }
 
-    }
+    }*/
 }

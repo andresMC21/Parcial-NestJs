@@ -91,8 +91,8 @@ export class Student {
 
     // TODO Reto 2: relación N:1 con Program -> propiedad `program?: Program`
     //   (opcional: un estudiante puede no tener programa; si se borra el programa, queda en NULL)
-    @OneToOne(() => Program, (program) => program.students, { nullable: true, onDelete: 'SET NULL' })
-    program?: Program;
+    @OneToOne(() => Program, { nullable: true, onDelete: 'SET NULL' })
+    programId?: number;
 
     @BeforeInsert()
     checkNicknameInsert() {

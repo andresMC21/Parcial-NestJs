@@ -7,6 +7,7 @@ import { GetUser } from 'src/user/decorators/get-user.decorator';
 import { User } from 'src/user/entities/user.entity';
 import { PaginationDto } from 'src/student/dto/pagination.dto';
 import { AssignStudentsDto } from './dto/assign-students.dto';
+import { BulkCreateProgramDto } from './dto/bulk-create-program.dto';
 
 @Controller('program')
 export class ProgramController {
@@ -32,7 +33,7 @@ export class ProgramController {
   // TODO Reto 2: GET    /api/program/:id           -> programa con sus estudiantes
   @Get(':id')
   @Auth()
-  async searchById(@Param('id') id: string) {
+  async searchById(@Param('id') id: number) {
 
     return await this.programService.findById(id);
 
@@ -41,7 +42,7 @@ export class ProgramController {
   // TODO Reto 2: PATCH  /api/program/:id/students  -> agregar estudiantes (acumulativo)
   @Patch(':id/students')
   @Auth(ValidRoles.admin)
-  async assignStudents(@Param() id: string, @Body() dto: AssignStudentsDto) {
+  async assignStudents(@Param() id: number, @Body() dto: AssignStudentsDto) {
 
     return await this.programService.assignStudents(id, dto);
 
@@ -50,9 +51,9 @@ export class ProgramController {
   // TODO Reto 3: POST   /api/program/bulk          -> crear programas en lote (todo o nada)
   @Post('bulk')
   @Auth(ValidRoles.admin)
-  async bulkPrograms(@Body() programs: CreateProgramDto[]) {
+  async bulkPrograms(@Body() programs: BulkCreateProgramDto) {
 
-    return await this.programService.bulkCreate(programs);
+    /*return await this.programService.bulkCreate(programs);*/
 
   }
 
