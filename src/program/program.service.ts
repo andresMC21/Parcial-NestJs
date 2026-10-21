@@ -27,8 +27,22 @@ export class ProgramService {
 
         try {
 
-            const newProgram = this.programRepository.create({ ...dto, createdBy: user });
-            return await this.programRepository.save(newProgram);
+            let finded = await this.programRepository.findOneBy({ name: dto.name });
+
+            if (!finded) {
+
+                finded = await this.programRepository.findOneBy({ code: dto.code });
+
+                if (!finded) {
+
+                    const newProgram = this.programRepository.create({ ...dto, createdBy: user });
+                    return await this.programRepository.save(newProgram);
+
+                }
+
+            }
+
+            throw new ConflictException('Name or code already registered')
 
         } catch (error) {
 

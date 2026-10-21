@@ -16,7 +16,7 @@ export class ProgramController {
   // TODO Reto 1: POST   /api/program               -> crear programa
   @Post()
   @Auth(ValidRoles.admin)
-  async create(dto: CreateProgramDto, @GetUser() user: User) {
+  async create(@Body() dto: CreateProgramDto, @GetUser() user: User) {
 
     return await this.programService.add(dto, user);
 
