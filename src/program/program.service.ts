@@ -16,6 +16,7 @@ export class ProgramService {
     constructor(
         @InjectRepository(Program)
         private readonly programRepository: Repository<Program>,
+        @InjectRepository(Student)
         private readonly studentRepository: Repository<Student>,
         private readonly datasource: DataSource
     ) { }
