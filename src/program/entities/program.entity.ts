@@ -16,7 +16,7 @@ import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, OneToMany, Prima
 export class Program {
 
     @PrimaryGeneratedColumn('uuid')
-    id: number;
+    id: string;
 
     @Column({
         type: 'text',
@@ -35,7 +35,7 @@ export class Program {
     })
     credits: number;
 
-    @OneToMany(() => Student, (student) => student.program)
+    @OneToMany(() => Student, (student) => student.programId)
     students?: Student[]
 
     @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })

@@ -57,7 +57,7 @@ export class ProgramService {
 
 
     // TODO Reto 2: findOne(id) -> programa con sus estudiantes, 404 si no existe
-    async findById(id: number) {
+    async findById(id: string) {
 
         const found = await this.programRepository.findOneBy({ id });
 
@@ -75,7 +75,7 @@ export class ProgramService {
     //   Mismo patrón del update de estudiantes corregido en clase (combinar las notas):
     //   traer los actuales -> combinar con los nuevos -> guardar la lista completa.
     //   Si algún id no existe: 404 y rollback.
-    async assignStudents(programId: number, dto: AssignStudentsDto) {
+    async assignStudents(programId: string, dto: AssignStudentsDto) {
 
         for (const id of dto.studentIds) {
 

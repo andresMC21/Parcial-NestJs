@@ -33,7 +33,7 @@ export class ProgramController {
   // TODO Reto 2: GET    /api/program/:id           -> programa con sus estudiantes
   @Get(':id')
   @Auth()
-  async searchById(@Param('id') id: number) {
+  async searchById(@Param('id') id: string) {
 
     return await this.programService.findById(id);
 
@@ -42,7 +42,7 @@ export class ProgramController {
   // TODO Reto 2: PATCH  /api/program/:id/students  -> agregar estudiantes (acumulativo)
   @Patch(':id/students')
   @Auth(ValidRoles.admin)
-  async assignStudents(@Param() id: number, @Body() dto: AssignStudentsDto) {
+  async assignStudents(@Param() id: string, @Body() dto: AssignStudentsDto) {
 
     return await this.programService.assignStudents(id, dto);
 
