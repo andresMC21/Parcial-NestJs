@@ -24,7 +24,6 @@ export class ProgramController {
 
   // TODO Reto 1: GET    /api/program               -> listar (paginado con PaginationDto)
   @Get()
-  @Auth()
   async searchAll(@Query() pagination: PaginationDto) {
 
     return await this.programService.findAll(pagination);
@@ -32,7 +31,6 @@ export class ProgramController {
 
   // TODO Reto 2: GET    /api/program/:id           -> programa con sus estudiantes
   @Get(':id')
-  @Auth()
   async searchById(@Param('id') id: string) {
 
     return await this.programService.findById(id);
