@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe } from '@nestjs/common';
 import { CampusService } from './campus.service';
 import { CreateCampusDto } from './dto/create-campus.dto';
 import { UpdateCampusDto } from './dto/update-campus.dto';
@@ -13,19 +13,19 @@ export class CampusController {
 
   @Post()
   @Auth(ValidRoles.admin)
-  create(@Body() createCampusDto: CreateCampusDto, @GetUser() user: User) {
+  async create(@Body() createCampusDto: CreateCampusDto, @GetUser() user: User) {
 
     return this.campusService.create(createCampusDto, user);
 
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.campusService.findOne(+id);
+  async seacrhById(@Param('id', ParseUUIDPipe) id: string) {
+    return this.campusService.findById(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateCampusDto: UpdateCampusDto) {
-    return this.campusService.update(+id, updateCampusDto);
+    //return this.campusService.update(+id, updateCampusDto);
   }
 }

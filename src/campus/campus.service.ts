@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCampusDto } from './dto/create-campus.dto';
 import { UpdateCampusDto } from './dto/update-campus.dto';
 import { Campus } from './entities/campus.entity';
@@ -36,19 +36,16 @@ export class CampusService {
     }
   }
 
-  findAll() {
-    return `This action returns all campus`;
-  }
+  async findById(id: string) {
 
-  findOne(id: number) {
-    return `This action returns a #${id} campus`;
-  }
+    const found = await this.campusRepository.findOne({ where: { id }, relations: { students: true } });
 
-  update(id: number, updateCampusDto: UpdateCampusDto) {
-    return `This action updates a #${id} campus`;
-  }
+    if (!found) {
 
-  remove(id: number) {
-    return `This action removes a #${id} campus`;
+      throw new NotFoundException;
+    }
+
+    return found;
+
   }
 }
