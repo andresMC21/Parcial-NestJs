@@ -2,6 +2,7 @@ import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, OneToMany, OneTo
 import { Grades } from "./grades.entity";
 import { ApiProperty } from "@nestjs/swagger";
 import { Program } from "src/program/entities/program.entity";
+import { Campus } from "src/campus/entities/campus.entity";
 
 @Entity()
 export class Student {
@@ -91,8 +92,11 @@ export class Student {
 
     // TODO Reto 2: relación N:1 con Program -> propiedad `program?: Program`
     //   (opcional: un estudiante puede no tener programa; si se borra el programa, queda en NULL)
-    @OneToOne(() => Program, { nullable: true, onDelete: 'SET NULL' })
-    programId?: number;
+    @ManyToOne(() => Program, (program) => program.students, { nullable: true, onDelete: 'SET NULL' })
+    programId?: string;
+
+    @ManyToOne(() => Campus, (campus) => campus.students, { nullable: true, onDelete: 'SET NULL' })
+    campusId?: string;
 
     @BeforeInsert()
     checkNicknameInsert() {

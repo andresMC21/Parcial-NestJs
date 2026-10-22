@@ -5,7 +5,7 @@ import { DataSource, Not, Repository } from 'typeorm';
 import { CreateProgramDto } from './dto/create-program.dto';
 import { User } from 'src/user/entities/user.entity';
 import { PaginationDto } from 'src/student/dto/pagination.dto';
-import { AssignStudentsDto } from './dto/assign-students.dto';
+import { AssignStudentsDto } from '../Common/assign-students.dto';
 import { Student } from 'src/student/entities/student.entity';
 import { BulkCreateProgramDto } from './dto/bulk-create-program.dto';
 
@@ -16,6 +16,7 @@ export class ProgramService {
     constructor(
         @InjectRepository(Program)
         private readonly programRepository: Repository<Program>,
+        @InjectRepository(Student)
         private readonly studentRepository: Repository<Student>,
         private readonly datasource: DataSource
     ) { }
@@ -26,8 +27,22 @@ export class ProgramService {
 
         try {
 
-            const newProgram = this.programRepository.create({ ...dto, createdBy: user });
-            return await this.programRepository.save(newProgram);
+            let finded = await this.programRepository.findOneBy({ name: dto.name });
+
+            if (!finded) {
+
+                finded = await this.programRepository.findOneBy({ code: dto.code });
+
+                if (!finded) {
+
+                    const newProgram = this.programRepository.create({ ...dto, createdBy: user });
+                    return await this.programRepository.save(newProgram);
+
+                }
+
+            }
+
+            throw new ConflictException('Name or code already registered')
 
         } catch (error) {
 
@@ -57,9 +72,9 @@ export class ProgramService {
 
 
     // TODO Reto 2: findOne(id) -> programa con sus estudiantes, 404 si no existe
-    async findById(id: number) {
+    async findById(id: string) {
 
-        const found = await this.programRepository.findOneBy({ id });
+        const found = await this.programRepository.findOne({ where: { id }, relations: { students: true } });
 
         if (!found) {
 
@@ -75,23 +90,25 @@ export class ProgramService {
     //   Mismo patrón del update de estudiantes corregido en clase (combinar las notas):
     //   traer los actuales -> combinar con los nuevos -> guardar la lista completa.
     //   Si algún id no existe: 404 y rollback.
-    async assignStudents(programId: number, dto: AssignStudentsDto) {
+    async assignStudents(programId: string, dto: AssignStudentsDto) {
 
-        for (const id of dto.studentIds) {
+        const queryRunner = this.datasource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
 
-            const student = await this.studentRepository.preload({
-                id: id
-            })
+        try {
 
-            if (!student) throw new NotFoundException(`Student with id ${id} not found`);
+            const program = await queryRunner.manager.findOne(Program, { where: { id: programId }, relations: { students: true } });
 
-            const queryRunner = this.datasource.createQueryRunner();
-            await queryRunner.connect();
-            await queryRunner.startTransaction();
+            if (!program) throw new NotFoundException('Program was not found')
 
-            try {
+            const currentStudents = program?.students ?? [];
 
-                const currentStudents = await queryRunner.manager.find(Student, { where: { programId: programId } });
+            for (const id of dto.studentIds) {
+
+                const student = await queryRunner.manager.findOne(Student, { where: { id: id } })
+
+                if (!student) throw new NotFoundException(`Student with id ${id} not found`);
 
                 const exist = currentStudents.find(
 
@@ -99,57 +116,80 @@ export class ProgramService {
 
                 );
 
-                if (exist) {
+                if (!exist) {
 
-                    exist.id = id;
+                    currentStudents.push(student)
 
-                } else {
+                    student.programId = programId;
 
-                    currentStudents.push(this.studentRepository.create({
-
-                        name: student.name,
-                        age: student.age,
-                        email: student.email,
-                        isActive: student.isActive,
-                        gender: student.gender,
-                        favoriteSubjects: student.favoriteSubjects,
-                        nickname: student.nickname
-
-                    }))
                 }
-
-                student.programId = programId;
-
-                await queryRunner.manager.save(student);
-                await queryRunner.commitTransaction();
-                await queryRunner.release();
-
-                return this.findById(programId);
-
-            } catch (error) {
-
-                await queryRunner.rollbackTransaction();
-                await queryRunner.release();
-
             }
+
+            program.students = currentStudents;
+
+            await queryRunner.manager.save(program);
+            await queryRunner.commitTransaction();
+            await queryRunner.release();
+
+            return this.findById(programId);
+
+        } catch (error) {
+
+            await queryRunner.rollbackTransaction();
+            await queryRunner.release();
+            throw error;
+
         }
+
     }
 
     // TODO Reto 3: bulkCreate(bulkCreateProgramDto, user) -> crea todos los programas o ninguno
     //   (transacción). Cualquier nombre/código repetido -> 409 y rollback.
-    /**async bulkCreate(programs: BulkCreateProgramDto) {
+    async bulkCreate(programs: BulkCreateProgramDto, user: User) {
+
+        const queryRunner = this.datasource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
 
         try {
 
-            for (const program in programs.programs) {
+            for (const program of programs.programs) {
 
-                const toCreate = this.programRepository.create(program)
+                let current = await queryRunner.manager.findOne(Program, { where: { name: program.name } })
+
+                if (current) {
+
+                    throw new ConflictException(`Program name ${program.name} already exist`)
+
+                } else {
+
+                    current = await queryRunner.manager.findOne(Program, { where: { code: program.code } })
+
+                    if (current) {
+
+                        throw new ConflictException(`Program name ${program.code} already exist`)
+
+                    }
+
+                    const newProgram = await queryRunner.manager.create(Program, { ...program, createdBy: user });
+
+                    await queryRunner.manager.save(newProgram);
+                }
+
             }
+
+            await queryRunner.commitTransaction();
+            await queryRunner.release();
+
+            return this.programRepository.find();
 
 
         } catch (error) {
 
-        }
+            await queryRunner.rollbackTransaction();
+            await queryRunner.release();
+            throw error;
 
-    }*/
+        }
+    }
 }
