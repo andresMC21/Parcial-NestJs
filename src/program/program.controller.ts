@@ -49,9 +49,9 @@ export class ProgramController {
   // TODO Reto 3: POST   /api/program/bulk          -> crear programas en lote (todo o nada)
   @Post('bulk')
   @Auth(ValidRoles.admin)
-  async bulkPrograms(@Body() programs: BulkCreateProgramDto) {
+  async bulkPrograms(@Body() programs: BulkCreateProgramDto, @GetUser() user: User) {
 
-    /*return this.programService.bulkCreate(programs);*/
+    return this.programService.bulkCreate(programs, user);
 
   }
 

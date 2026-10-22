@@ -145,19 +145,51 @@ export class ProgramService {
 
     // TODO Reto 3: bulkCreate(bulkCreateProgramDto, user) -> crea todos los programas o ninguno
     //   (transacción). Cualquier nombre/código repetido -> 409 y rollback.
-    /**async bulkCreate(programs: BulkCreateProgramDto) {
+    async bulkCreate(programs: BulkCreateProgramDto, user: User) {
+
+        const queryRunner = this.datasource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
 
         try {
 
-            for (const program in programs.programs) {
+            for (const program of programs.programs) {
 
-                const toCreate = this.programRepository.create(program)
+                let current = await queryRunner.manager.findOne(Program, { where: { name: program.name } })
+
+                if (current) {
+
+                    throw new ConflictException(`Program name ${program.name} already exist`)
+
+                } else {
+
+                    current = await queryRunner.manager.findOne(Program, { where: { code: program.code } })
+
+                    if (current) {
+
+                        throw new ConflictException(`Program name ${program.code} already exist`)
+
+                    }
+
+                    const newProgram = await queryRunner.manager.create(Program, { ...program, createdBy: user });
+
+                    await queryRunner.manager.save(newProgram);
+                }
+
             }
+
+            await queryRunner.commitTransaction();
+            await queryRunner.release();
+
+            return this.programRepository.find();
 
 
         } catch (error) {
 
-        }
+            await queryRunner.rollbackTransaction();
+            await queryRunner.release();
+            throw error;
 
-    }*/
+        }
+    }
 }
