@@ -6,7 +6,7 @@ import { CreateProgramDto } from './dto/create-program.dto';
 import { GetUser } from 'src/user/decorators/get-user.decorator';
 import { User } from 'src/user/entities/user.entity';
 import { PaginationDto } from 'src/student/dto/pagination.dto';
-import { AssignStudentsDto } from './dto/assign-students.dto';
+import { AssignStudentsDto } from '../Common/assign-students.dto';
 import { BulkCreateProgramDto } from './dto/bulk-create-program.dto';
 
 @Controller('program')
