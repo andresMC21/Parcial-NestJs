@@ -8,7 +8,6 @@ export class AssignStudentsDto {
 
     @IsArray()
     @ArrayNotEmpty()
-    @IsEmail({}, { each: true })
     studentIds: string[];
 
 }

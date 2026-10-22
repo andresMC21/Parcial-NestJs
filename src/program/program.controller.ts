@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { ProgramService } from './program.service';
 import { Auth } from 'src/user/decorators/auth.decorator';
 import { ValidRoles } from 'src/user/enums/valid-roles.enum';
@@ -18,7 +18,7 @@ export class ProgramController {
   @Auth(ValidRoles.admin)
   async create(@Body() dto: CreateProgramDto, @GetUser() user: User) {
 
-    return await this.programService.add(dto, user);
+    return this.programService.add(dto, user);
 
   }
 
@@ -26,23 +26,23 @@ export class ProgramController {
   @Get()
   async searchAll(@Query() pagination: PaginationDto) {
 
-    return await this.programService.findAll(pagination);
+    return this.programService.findAll(pagination);
   }
 
   // TODO Reto 2: GET    /api/program/:id           -> programa con sus estudiantes
   @Get(':id')
-  async searchById(@Param('id') id: string) {
+  async searchById(@Param('id', ParseUUIDPipe) id: string) {
 
-    return await this.programService.findById(id);
+    return this.programService.findById(id);
 
   }
 
   // TODO Reto 2: PATCH  /api/program/:id/students  -> agregar estudiantes (acumulativo)
   @Patch(':id/students')
   @Auth(ValidRoles.admin)
-  async assignStudents(@Param() id: string, @Body() dto: AssignStudentsDto) {
+  async assignStudents(@Param('id', ParseUUIDPipe) id: string, @Body() dto: AssignStudentsDto) {
 
-    return await this.programService.assignStudents(id, dto);
+    return this.programService.assignStudents(id, dto);
 
   }
 
@@ -51,7 +51,7 @@ export class ProgramController {
   @Auth(ValidRoles.admin)
   async bulkPrograms(@Body() programs: BulkCreateProgramDto) {
 
-    /*return await this.programService.bulkCreate(programs);*/
+    /*return this.programService.bulkCreate(programs);*/
 
   }
 

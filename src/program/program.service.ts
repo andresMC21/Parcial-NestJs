@@ -74,7 +74,7 @@ export class ProgramService {
     // TODO Reto 2: findOne(id) -> programa con sus estudiantes, 404 si no existe
     async findById(id: string) {
 
-        const found = await this.programRepository.findOneBy({ id });
+        const found = await this.programRepository.findOne({ where: { id }, relations: { students: true } });
 
         if (!found) {
 
@@ -92,21 +92,23 @@ export class ProgramService {
     //   Si algún id no existe: 404 y rollback.
     async assignStudents(programId: string, dto: AssignStudentsDto) {
 
-        for (const id of dto.studentIds) {
+        const queryRunner = this.datasource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
 
-            const student = await this.studentRepository.preload({
-                id: id
-            })
+        try {
 
-            if (!student) throw new NotFoundException(`Student with id ${id} not found`);
+            const program = await queryRunner.manager.findOne(Program, { where: { id: programId }, relations: { students: true } });
 
-            const queryRunner = this.datasource.createQueryRunner();
-            await queryRunner.connect();
-            await queryRunner.startTransaction();
+            if (!program) throw new NotFoundException('Program was not found')
 
-            try {
+            const currentStudents = program?.students ?? [];
 
-                const currentStudents = await queryRunner.manager.find(Student, { where: { programId: programId } });
+            for (const id of dto.studentIds) {
+
+                const student = await queryRunner.manager.findOne(Student, { where: { id: id } })
+
+                if (!student) throw new NotFoundException(`Student with id ${id} not found`);
 
                 const exist = currentStudents.find(
 
@@ -114,40 +116,31 @@ export class ProgramService {
 
                 );
 
-                if (exist) {
+                if (!exist) {
 
-                    exist.id = id;
+                    currentStudents.push(student)
 
-                } else {
+                    student.programId = programId;
 
-                    currentStudents.push(this.studentRepository.create({
-
-                        name: student.name,
-                        age: student.age,
-                        email: student.email,
-                        isActive: student.isActive,
-                        gender: student.gender,
-                        favoriteSubjects: student.favoriteSubjects,
-                        nickname: student.nickname
-
-                    }))
                 }
-
-                student.programId = programId;
-
-                await queryRunner.manager.save(student);
-                await queryRunner.commitTransaction();
-                await queryRunner.release();
-
-                return this.findById(programId);
-
-            } catch (error) {
-
-                await queryRunner.rollbackTransaction();
-                await queryRunner.release();
-
             }
+
+            program.students = currentStudents;
+
+            await queryRunner.manager.save(program);
+            await queryRunner.commitTransaction();
+            await queryRunner.release();
+
+            return this.findById(programId);
+
+        } catch (error) {
+
+            await queryRunner.rollbackTransaction();
+            await queryRunner.release();
+            throw error;
+
         }
+
     }
 
     // TODO Reto 3: bulkCreate(bulkCreateProgramDto, user) -> crea todos los programas o ninguno
